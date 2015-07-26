@@ -1,18 +1,33 @@
-config = require("config")
-http = require("resty.http")
-uuid = require("resty.uuid")
-cjson = require("cjson")
-
-log_fd = io.open(config.log_pwd.."waf.log","ab")
-dymanic_block_ips_pool = ngx.shared.dymanic_block_ips_pool
-
-function dslog(...)
-    ngx.log(ngx.ERR, ...)
+function ngxlog(...)
+    ngx.log(ngx.ERR, "[NGINX-LUA-DS-WAF] ", ...)
 end
 
-function split(str, sep)
-    local fields = {}
-    str:gsub("[^"..sep.."]+", function(c) fields[#fields+1] = c end)
-    return fields
+local redis = require "resty.redis_iresty"
+red = redis:new()
+
+fd_log = io.open("/var/log/waf/waf.log","ab")
+
+function redis_get(key, default_value)
+    local res, err = red:get(key)
+    if not res then
+        ngxlog("Can't get " .. key .. " from redis: ", err)
+        return default_value
+    else
+        return res
+    end
 end
 
+function redis_smembers(key)
+    local res, err = red:smembers(key)
+    if not res then
+        ngxlog("Can't get " .. key .. " from redis: ", err)
+    else
+        return res
+    end
+end
+
+function dswaf_output()
+    ngx.status = ngx.HTTP_FORBIDDEN
+    ngx.say("You have been blocked by NGINX-LUA-DS-WAF.")
+    ngx.exit(ngx.HTTP_FORBIDDEN)
+end
