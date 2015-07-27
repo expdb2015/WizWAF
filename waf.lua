@@ -76,7 +76,7 @@ function dymanic_block_ip_module(mode)
         red:expire(remote_addr, 60)
     else
         red:incr(remote_addr)
-        if tonumber(access_num) > tonumber(redis_get("DSWAF_DYMANIC_BLOCK_IPS_RATE", 10)) then
+        if tonumber(access_num) > tonumber(redis_get("DSWAF_DYMANIC_BLOCK_IPS_RATE", 1000)) then
             log("DYMANIC_BLOCK_IP_MODULE", remote_addr .. "(" .. access_num .. ")")
             if mode == "ENABLE" then dswaf_output() end
         end
