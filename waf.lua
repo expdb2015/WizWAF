@@ -29,6 +29,7 @@ function block_ip_module(mode)
     end
 end
 
+
 function block_url_module(mode)
     local block_url_slices = redis_smembers("DSWAF_BLOCK_URL_SLICES")
     if block_url_slices then
@@ -40,6 +41,7 @@ function block_url_module(mode)
         end
     end
 end
+
 
 function block_user_agent_module(mode)
     local block_user_agent_slices = redis_smembers("DSWAF_BLOCK_UA_SLICES")
@@ -55,6 +57,7 @@ function block_user_agent_module(mode)
     end
 end
 
+
 function block_cookie_module(mode)
     local block_cookie_slices = redis_smembers("DSWAF_BLOCK_COOKIE_SLICES")
     if block_cookie_slices then
@@ -68,6 +71,24 @@ function block_cookie_module(mode)
         end
     end
 end
+
+
+function block_body_module(mode)
+    local block_body_slices = redis_smembers("DSWAF_BLOCK_BODY_SLICES")
+    if block_body_slices then
+        ngx.req.read_body()
+        local post_args = ngx.req.get_post_args()
+        for post_arg_key, post_arg_value in pairs(post_args) do
+            for _, block_body_slice in ipairs(block_body_slices) do
+                if ngx.re.match(post_arg_value, block_body_slice, "sjo") then
+                    log("BLOCK_COOKIE_MODULE", post_arg_key .. ":" .. post_arg_value .. "(" .. block_body_slice .. ")")
+                    if mode == "ENABLE" then dswaf_output() end
+                end
+            end
+        end
+    end
+end
+
 
 function dymanic_block_ip_module(mode)
     local access_num = redis_get(remote_addr)
@@ -90,5 +111,6 @@ if mode == "ENABLE" or mode == "AUDIT" then
     block_user_agent_module(mode)
     block_cookie_module(mode)
     dymanic_block_ip_module(mode)
+    if request_method == "POST" and headers["Content-Type"] == "application/x-www-form-urlencoded" then block_body_module(mode) end 
 else
 end
