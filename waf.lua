@@ -132,3 +132,77 @@ if mode == "ENABLE" or mode == "AUDIT" then
     if request_method == "POST" and headers["Content-Type"] == "application/x-www-form-urlencoded" then block_body_module(mode) end 
 else
 end
+
+
+----------------------
+
+local strlen =  string.len
+local cjson = require "cjson"
+local rabbitmq = require "resty.rabbitmqstomp"
+
+
+local opts = { username = "guest",
+               password = "guest",
+               vhost = "/" }
+
+local mq, err = rabbitmq:new(opts)
+ngxlog("mq ", err)
+
+if not mq then
+      return
+end
+
+mq:set_timeout(2000)
+
+local ok, err = mq:connect("127.0.0.1", 61613) 
+ngxlog("ok ", ok, err)
+
+if not ok then
+    return
+end
+
+local msg = {key="value1", key2="value2"}
+local headers = {}
+headers["destination"] = "/exchange/test/binding"
+headers["receipt"] = "msg#1"
+headers["app-id"] = "luaresty"
+headers["persistent"] = "true"
+headers["content-type"] = "application/json"
+
+local ok, err = mq:send(cjson.encode(msg), headers)
+ngxlog("send ", ok, err)
+
+if not ok then
+    return
+end
+ngx.log(ngx.ERR, "Published: " .. cjson.encode(msg))
+
+
+--[[
+local headers = {}
+headers["destination"] = "/amq/queue/queuename"
+headers["persistent"] = "true"
+headers["id"] = "123"
+
+local ok, err = mq:subscribe(headers)
+if not ok then
+    return
+end
+
+local data, err = mq:receive()
+if not ok then
+    return
+end
+ngx.log(ngx.ERR, "Consumed: " .. data)
+
+local headers = {}
+headers["persistent"] = "true"
+headers["id"] = "123"
+
+local ok, err = mq:unsubscribe(headers)
+]]
+
+local ok, err = mq:set_keepalive(10000, 10000)
+if not ok then
+    return
+end
