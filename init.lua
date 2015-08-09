@@ -7,24 +7,53 @@ red = redis:new()
 
 fd_log = io.open("/var/log/waf/waf.log","ab")
 
-function redis_get(key, default_value)
-    local res, err = red:get(key)
-    if not res then
-        ngxlog("Can't get " .. key .. " from redis: ", err)
-        return default_value
+
+function split(str, sep)
+    local fields = {}
+    str:gsub("[^"..sep.."]+", function(c) fields[#fields+1] = c end)
+    return fields
+end
+
+
+function get_value_from_cache_or_redis(key)
+    local value = ngx.shared.redis_cache:get(key)
+    if value then
+        return value
     else
-        return res
+        local res, err = red:get(key)
+        if res then
+            ngx.shared.redis_cache:safe_set(key, res, 600)
+            return res
+        else
+            ngxlog("Can't get " .. key .. " from redis: ", err)
+        end
     end
 end
 
-function redis_smembers(key)
-    local res, err = red:smembers(key)
-    if not res then
-        ngxlog("Can't get " .. key .. " from redis: ", err)
+
+function get_smembers_from_cache_or_redis(key)
+    local str = ngx.shared.redis_cache:get(key)
+    if str then
+        return split(str, "|||||")
     else
-        return res
+        local res, err = red:smembers(key)
+        if res then
+            local str = ""
+            for key, value in ipairs(res) do
+                if key == 1 then
+                    str = value
+                else
+                    str = str .. "|||||" .. value
+                end
+            end
+            ngx.shared.redis_cache:safe_set(key, str, 600)
+            return res
+        else
+            ngxlog("Can't get " .. key .. " from redis: ", err)
+        end
     end
 end
+
 
 function dswaf_output()
     ngx.status = ngx.HTTP_FORBIDDEN
