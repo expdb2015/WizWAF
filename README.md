@@ -27,5 +27,7 @@ Add the config below to the http seg in nginx.conf:
     lua_package_path "/usr/local/nginx/lua/nginx-lua-ds-waf-new/?.lua;;";
     init_by_lua_file lua/nginx-lua-ds-waf-new/init.lua;
     access_by_lua_file lua/nginx-lua-ds-waf-new/waf.lua;
+    lua_shared_dict redis_cache 10m;
+
     
 
