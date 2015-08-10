@@ -1,9 +1,21 @@
+cjson = require "cjson"
+
+function debuglog(...)
+    local log_table = {}
+    for i = 1, select("#", ...) do
+        log_table[i] = select(i, ...)
+    end
+    ngx.log(ngx.ERR, "[NGINX-LUA-DS-WAF-DEBUG] ", cjson.encode(log_table))
+end
+
 function ngxlog(...)
     ngx.log(ngx.ERR, "[NGINX-LUA-DS-WAF] ", ...)
 end
 
 local redis = require "resty.redis_iresty"
 red = redis:new()
+rabbitmq = require "resty.rabbitmqstomp"
+
 
 fd_log = io.open("/var/log/waf/waf.log","ab")
 

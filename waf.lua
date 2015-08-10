@@ -10,16 +10,76 @@ local http_user_agent = ngx.var.http_user_agent
 local http_referer = ngx.var.http_referer
 local http_cookie = ngx.var.http_cookie
 
-function log_file(module_name, why)
-    local http_user_agent = http_user_agent or "-"
-    local http_referer = http_referer or "-"
-    local line = string.format([[[%s] "%s" : %s [%s] "%s %s %s" "%s" "%s"]] .. "\n", module_name, why, remote_addr, localtime, request_method, request_uri, server_protocol, http_referer, http_user_agent)
-    fd_log:write(line)
+
+function log_file(log_json)
+    fd_log:write(log_json)
     fd_log:flush()
 end
 
+
+function log_rabbitmq(log_json)
+    local RABBITMQ_HOST = "127.0.0.1"
+    local RABBITMQ_PORT = 61613
+
+    local RABBITMQ_USERNAME = "guest"
+    local RABBITMQ_PASSWORD = "guest"
+    local RABBITMQ_VHOST = "/"
+
+    local EXCHANGE_NAME = "test"
+    local QUEUE_NAME = "binding"
+
+    local RABBITMQ_OPT_PERSISTENT = "true"
+
+    local opts = {
+        username = RABBITMQ_USERNAME,
+        password = RABBITMQ_PASSWORD,
+        vhost = RABBITMQ_VHOST
+    }
+    local mq, err = rabbitmq:new(opts)
+    if not mq then
+        ngxlog("Can't new rabbitmq: " .. err)
+        return
+    end
+    mq:set_timeout(2000)
+
+    local ok, err = mq:connect(RABBITMQ_HOST, RABBITMQ_PORT)
+    if not ok then
+        ngxlog("Can't connect to rabbitmq: " .. err)
+        return
+    end
+
+    local headers = {}
+    headers["destination"] = "/exchange/" .. EXCHANGE_NAME .. "/" .. QUEUE_NAME
+    headers["receipt"] = "msg#1"
+    headers["app-id"] = "luaresty"
+    headers["persistent"] = RABBITMQ_OPT_PERSISTENT
+    headers["content-type"] = "application/json"
+
+    local ok, err = mq:send(log_json, headers)
+    if not ok then
+        ngxlog("Can't send log to rabbitmq: " .. err)
+        return
+    else
+        --ngxlog("Log have been sent to rabbitmq: " .. log_json)
+    end
+
+    local ok, err = mq:set_keepalive(30000, 30000)
+    if not ok then
+        ngxlog("Can't set rabbitmq keepalive: " .. err)
+    else
+        --ngxlog("Set rabbitmq keepalive: 30s")
+    end
+end
+
+
+
 function log(module_name, why)
-    log_file(module_name, why)
+    local http_user_agent = http_user_agent or "-"
+    local http_referer = http_referer or "-"
+    local log_json = string.format([[[%s] "%s" : %s [%s] "%s %s %s" "%s" "%s"]] .. "\n", module_name, why, remote_addr, localtime, request_method, request_uri, server_protocol, http_referer, http_user_agent)
+
+    log_file(log_json)
+    log_rabbitmq(log_json)
 end
 
 function block_ip_module(mode)
@@ -134,75 +194,3 @@ else
 end
 
 
-----------------------
-
-local strlen =  string.len
-local cjson = require "cjson"
-local rabbitmq = require "resty.rabbitmqstomp"
-
-
-local opts = { username = "guest",
-               password = "guest",
-               vhost = "/" }
-
-local mq, err = rabbitmq:new(opts)
-ngxlog("mq ", err)
-
-if not mq then
-      return
-end
-
-mq:set_timeout(2000)
-
-local ok, err = mq:connect("127.0.0.1", 61613) 
-ngxlog("ok ", ok, err)
-
-if not ok then
-    return
-end
-
-local msg = {key="value1", key2="value2"}
-local headers = {}
-headers["destination"] = "/exchange/test/binding"
-headers["receipt"] = "msg#1"
-headers["app-id"] = "luaresty"
-headers["persistent"] = "true"
-headers["content-type"] = "application/json"
-
-local ok, err = mq:send(cjson.encode(msg), headers)
-ngxlog("send ", ok, err)
-
-if not ok then
-    return
-end
-ngx.log(ngx.ERR, "Published: " .. cjson.encode(msg))
-
-
---[[
-local headers = {}
-headers["destination"] = "/amq/queue/queuename"
-headers["persistent"] = "true"
-headers["id"] = "123"
-
-local ok, err = mq:subscribe(headers)
-if not ok then
-    return
-end
-
-local data, err = mq:receive()
-if not ok then
-    return
-end
-ngx.log(ngx.ERR, "Consumed: " .. data)
-
-local headers = {}
-headers["persistent"] = "true"
-headers["id"] = "123"
-
-local ok, err = mq:unsubscribe(headers)
-]]
-
-local ok, err = mq:set_keepalive(10000, 10000)
-if not ok then
-    return
-end
