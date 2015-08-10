@@ -11,8 +11,8 @@ local http_referer = ngx.var.http_referer
 local http_cookie = ngx.var.http_cookie
 
 
-function log_file(log_json)
-    fd_log:write(log_json)
+function log_file(item)
+    fd_log:write(item)
     fd_log:flush()
 end
 
@@ -50,8 +50,6 @@ function log_rabbitmq(log_json)
 
     local headers = {}
     headers["destination"] = "/exchange/" .. EXCHANGE_NAME .. "/" .. QUEUE_NAME
-    headers["receipt"] = "msg#1"
-    headers["app-id"] = "luaresty"
     headers["persistent"] = RABBITMQ_OPT_PERSISTENT
     headers["content-type"] = "application/json"
 
@@ -74,12 +72,27 @@ end
 
 
 function log(module_name, why)
+    local log_table = {
+        module_name = module_name,
+        why = why,
+        remote_addr = remote_addr,
+        localtime = localtime,
+        request_method = request_method,
+        request_uri = request_uri,
+        server_protocol = server_protocol,
+        http_referer = http_referer,
+        http_user_agent = http_user_agent
+    }
+    local log_json = cjson.encode(log_table)
+
+    log_rabbitmq(log_json)
+    --log_file(log_json .. "\n")
+
     local http_user_agent = http_user_agent or "-"
     local http_referer = http_referer or "-"
-    local log_json = string.format([[[%s] "%s" : %s [%s] "%s %s %s" "%s" "%s"]] .. "\n", module_name, why, remote_addr, localtime, request_method, request_uri, server_protocol, http_referer, http_user_agent)
+    local log_text = string.format([[[%s] "%s" : %s [%s] "%s %s %s" "%s" "%s"]], module_name, why, remote_addr, localtime, request_method, request_uri, server_protocol, http_referer, http_user_agent)
 
-    log_file(log_json)
-    log_rabbitmq(log_json)
+    log_file(log_text .. "\n")
 end
 
 function block_ip_module(mode)
