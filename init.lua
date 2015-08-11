@@ -6,11 +6,11 @@ function debuglog(...)
     for i = 1, select("#", ...) do
         log_table[i] = select(i, ...)
     end
-    ngx.log(ngx.ERR, "[NGINX-LUA-DS-WAF-DEBUG] ", cjson.encode(log_table))
+    ngx.log(ngx.ERR, "[WIZWAF-DEBUG] ", cjson.encode(log_table))
 end
 
 function ngxlog(...)
-    ngx.log(ngx.ERR, "[NGINX-LUA-DS-WAF] ", ...)
+    ngx.log(ngx.ERR, "[WIZWAF] ", ...)
 end
 
 
@@ -40,7 +40,7 @@ function dswaf_output()
         <meta charset="utf-8">
 </head>
 <body style="width:100%;height:100%;background:#0066cc;">
-        <h1 style="color:#FFF;text-align:center;">You have been blocked by NGINX-LUA-DS-WAF.</h1>
+        <h1 style="color:#FFF;text-align:center;">You have been blocked by WIZWAF.</h1>
 </body>
 </html>
 ]])
