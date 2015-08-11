@@ -1,4 +1,4 @@
-# WIZWAF
+# WizWAF
 
 基于openresty/lua-nginx-module的全新设计的WAF系统
 
