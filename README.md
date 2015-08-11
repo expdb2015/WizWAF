@@ -15,7 +15,7 @@ A new WAF based on openresty/lua-nginx-module
 
 将代码放在位于nginx根目录下的lua/wizwaf/下
 
-Put the code into the directory lua/wizwaf which is located in the root directory of the nginx
+Put the code into the directory lua/wizwaf/ which is located in the root directory of the nginx
 
 在nginx.conf的http段中添加如下配置：
 
