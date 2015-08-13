@@ -21,10 +21,10 @@ Put the code into the directory lua/wizwaf/ which is located in the root directo
 
 Add the config below to the http seg in nginx.conf:
 
-> lua_package_path "/usr/local/openresty/nginx/lua/wizwaf/?.lua;;";
+>    lua_package_path "/usr/local/openresty/nginx/lua/WizWAF/?.lua;;";
 
-> init_by_lua_file lua/wizwaf/init.lua;
+>    init_by_lua_file lua/WizWAF/init.lua;
 
-> access_by_lua_file lua/wizwaf/waf.lua;
+>    access_by_lua_file lua/WizWAF/waf.lua;
 
-> lua_shared_dict redis_cache 10m;
+>    lua_shared_dict redis_cache 10m;
