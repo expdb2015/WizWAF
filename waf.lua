@@ -41,7 +41,7 @@ function block_ip_module(mode)
         for _, block_ip in ipairs(block_ips) do
             if remote_addr == block_ip then
                 log("BLOCK_IP_MODULE", remote_addr)
-                if mode == "ENABLE" then dswaf_output() else return end
+                if mode == "ENABLE" then wizwaf_output() else return end
             end
         end
     end
@@ -54,7 +54,7 @@ function block_url_module(mode)
         for _, block_url_slice in ipairs(block_url_slices) do
             if ngx.re.match(request_uri, block_url_slice, "sjo") then
                 log("BLOCK_URL_MODULE", block_url_slice)
-                if mode == "ENABLE" then dswaf_output() else return end
+                if mode == "ENABLE" then wizwaf_output() else return end
             end
         end
     end
@@ -68,7 +68,7 @@ function block_user_agent_module(mode)
             for _, block_user_agent_slice in ipairs(block_user_agent_slices) do
                 if ngx.re.match(http_user_agent, block_user_agent_slice, "isjo") then
                     log("BLOCK_USER_AGENT_MODULE", block_user_agenti_slice)
-                    if mode == "ENABLE" then dswaf_output() else return end
+                    if mode == "ENABLE" then wizwaf_output() else return end
                 end
             end
         end
@@ -83,7 +83,7 @@ function block_cookie_module(mode)
             for _, block_cookie_slice in ipairs(block_cookie_slices) do
                 if ngx.re.match(http_cookie, block_cookie_slice, "sjo") then
                     log("BLOCK_COOKIE_MODULE", block_cookie_slice)
-                    if mode == "ENABLE" then dswaf_output() else return end
+                    if mode == "ENABLE" then wizwaf_output() else return end
                 end
             end
         end
@@ -100,7 +100,7 @@ function block_body_module(mode)
             for _, block_body_slice in ipairs(block_body_slices) do
                 if ngx.re.match(post_arg_value, block_body_slice, "sjo") then
                     log("BLOCK_COOKIE_MODULE", post_arg_key .. ":" .. post_arg_value .. "(" .. block_body_slice .. ")")
-                    if mode == "ENABLE" then dswaf_output() else return end
+                    if mode == "ENABLE" then wizwaf_output() else return end
                 end
             end
         end
@@ -117,7 +117,7 @@ function dymanic_block_ip_module_redis(mode)
         red:incr(remote_addr)
         if tonumber(access_num) > tonumber(get_value_from_cache_or_redis("WIZWAF_DYMANIC_BLOCK_IPS_RATE") or 1000) then
             log("DYMANIC_BLOCK_IP_MODULE", remote_addr .. "(" .. access_num .. ")")
-            if mode == "ENABLE" then dswaf_output() else return end
+            if mode == "ENABLE" then wizwaf_output() else return end
         end
     end
 end
@@ -129,7 +129,7 @@ function dymanic_block_ip_module_cache(mode)
     local access_num, err = ngx.shared.redis_cache:get(remote_addr)
     if access_num and access_num > tonumber(get_value_from_cache_or_redis("WIZWAF_DYMANIC_BLOCK_IPS_RATE") or 1000) then
         log("DYMANIC_BLOCK_IP_MODULE", remote_addr .. "(" .. access_num .. ")")
-        if mode == "ENABLE" then dswaf_output() else return end
+        if mode == "ENABLE" then wizwaf_output() else return end
     end
 end
 

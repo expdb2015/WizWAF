@@ -30,7 +30,7 @@ function split(str, sep)
     return fields
 end
 
-function dswaf_output()
+function wizwaf_output()
     ngx.status = ngx.HTTP_FORBIDDEN
     ngx.header.content_type = 'text/html'
     ngx.say([[
