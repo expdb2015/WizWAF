@@ -7,7 +7,7 @@ A new WAF based on openresty/lua-nginx-module
 ### Dependencies:
 
 - openresty or nginx with openresty/lua-nginx-module
-- resty/redis_iresty.lua
+- openresty-best-practices/redis_iresty.lua
 - wingify/lua-resty-rabbitmqstomp
 
 
