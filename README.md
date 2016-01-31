@@ -2,8 +2,6 @@
 
 基于openresty/lua-nginx-module的全新设计的WAF系统
 
-A new WAF based on openresty/lua-nginx-module
-
 ### 依赖:
 
 - openresty or nginx with openresty/lua-nginx-module
