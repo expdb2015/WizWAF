@@ -26,7 +26,6 @@ function log(module_name, why)
     local log_json = cjson.encode(log_table)
 
     log_rabbitmq(log_json)
-    --log_file(log_json .. "\n")
 
     local http_user_agent = http_user_agent or "-"
     local http_referer = http_referer or "-"

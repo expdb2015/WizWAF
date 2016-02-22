@@ -13,8 +13,11 @@ function ngxlog(...)
     ngx.log(ngx.ERR, "[WIZWAF] ", ...)
 end
 
+fd_log, err = io.open("/var/log/waf/waf.log","ab")
+if not fd_log then
+    ngxlog(err)
+end
 
-fd_log = io.open("/var/log/waf/waf.log","ab")
 function log_file(item)
     fd_log:write(item)
     fd_log:flush()
@@ -104,8 +107,8 @@ function log_rabbitmq(log_json)
     local RABBITMQ_PASSWORD = "guest"
     local RABBITMQ_VHOST = "/"
 
-    local EXCHANGE_NAME = "test"
-    local QUEUE_NAME = "binding"
+    local EXCHANGE_NAME = "wizwaf"
+    local QUEUE_NAME = "log"
 
     local RABBITMQ_OPT_PERSISTENT = "true"
 
